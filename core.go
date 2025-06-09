@@ -12,7 +12,7 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
-type point struct {
+type Point struct {
 	X, Y *big.Int
 }
 
@@ -40,49 +40,49 @@ func (c *Core) getHasher() hash.Hash {
 	return c.cachedHasher
 }
 
-// Marshal marshals a point into compressed form specified in section 4.3.6 of ANSI X9.62.
+// Marshal marshals a Point into compressed form specified in section 4.3.6 of ANSI X9.62.
 // It's the alias of `point_to_string` specified in [draft-irtf-cfrg-VrfImpl-06 section 5.5](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.5).
-func (c *Core) Marshal(pt *point) []byte {
+func (c *Core) Marshal(pt *Point) []byte {
 	return elliptic.MarshalCompressed(c.Curve, pt.X, pt.Y)
 }
 
-// Unmarshal unmarshals a compressed point in the form specified in section 4.3.6 of ANSI X9.62.
+// Unmarshal unmarshals a compressed Point in the form specified in section 4.3.6 of ANSI X9.62.
 // It's the alias of `string_to_point` specified in [draft-irtf-cfrg-VrfImpl-06 section 5.5](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.5).
 // This is borrowed from the project https://github.com/google/keytransparency.
-func (c *Core) Unmarshal(in []byte) *point {
+func (c *Core) Unmarshal(in []byte) *Point {
 	if x, y := c.Decompress(c.Curve, in); x != nil && y != nil {
-		return &point{x, y}
+		return &Point{x, y}
 	}
 	return nil
 }
 
-func (c *Core) ScalarMult(pt *point, k []byte) *point {
+func (c *Core) ScalarMult(pt *Point, k []byte) *Point {
 	x, y := c.Curve.ScalarMult(pt.X, pt.Y, k)
-	return &point{x, y}
+	return &Point{x, y}
 }
 
-func (c *Core) ScalarBaseMult(k []byte) *point {
+func (c *Core) ScalarBaseMult(k []byte) *Point {
 	x, y := c.Curve.ScalarBaseMult(k)
-	return &point{x, y}
+	return &Point{x, y}
 }
 
-func (c *Core) Add(pt1, pt2 *point) *point {
+func (c *Core) Add(pt1, pt2 *Point) *Point {
 	x, y := c.Curve.Add(pt1.X, pt1.Y, pt2.X, pt2.Y)
-	return &point{x, y}
+	return &Point{x, y}
 }
 
-func (c *Core) Sub(pt1, pt2 *point) *point {
+func (c *Core) Sub(pt1, pt2 *Point) *Point {
 	// pt1 - pt2 = pt1 + invert(pt2),
 	// where invert(pt2) = (x2, P - y2)
 	x, y := c.Curve.Add(
 		pt1.X, pt1.Y,
 		pt2.X, new(big.Int).Sub(c.Curve.Params().P, pt2.Y))
-	return &point{x, y}
+	return &Point{x, y}
 }
 
 // HashToCurveTryAndIncrement takes in the VRF input `alpha` and converts it to H, using the try_and_increment algorithm.
 // See: [draft-irtf-cfrg-VrfImpl-06 section 5.4.1.1](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.4.1.1).
-func (c *Core) HashToCurveTryAndIncrement(pk *point, alpha []byte) (*point, error) {
+func (c *Core) HashToCurveTryAndIncrement(pk *Point, alpha []byte) (*Point, error) {
 	hasher := c.getHasher()
 	hash := make([]byte, 1+hasher.Size())
 	hash[0] = 2 // compress format
@@ -116,11 +116,11 @@ func (c *Core) HashToCurveTryAndIncrement(pk *point, alpha []byte) (*point, erro
 			return H, nil
 		}
 	}
-	return nil, errors.New("no valid point found")
+	return nil, errors.New("no valid Point found")
 }
 
 // See: [draft-irtf-cfrg-VrfImpl-06 section 5.4.3](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.4.3)
-func (c *Core) HashPoints(points ...*point) *big.Int {
+func (c *Core) HashPoints(points ...*Point) *big.Int {
 	hasher := c.getHasher()
 	hasher.Write([]byte{c.SuiteString, 0x2})
 	for _, pt := range points {
@@ -129,7 +129,7 @@ func (c *Core) HashPoints(points ...*point) *big.Int {
 	return bits2int(hasher.Sum(nil), c.N()*8)
 }
 
-func (c *Core) GammaToHash(gamma *point) []byte {
+func (c *Core) GammaToHash(gamma *Point) []byte {
 	gammaCof := gamma
 	if c.Cofactor != 1 {
 		gammaCof = c.ScalarMult(gamma, []byte{c.Cofactor})
@@ -140,7 +140,7 @@ func (c *Core) GammaToHash(gamma *point) []byte {
 	return hasher.Sum(nil)
 }
 
-func (c *Core) EncodeProof(gamma *point, C, S *big.Int) []byte {
+func (c *Core) EncodeProof(gamma *Point, C, S *big.Int) []byte {
 	gammaBytes := c.Marshal(gamma)
 
 	cbytes := int2octets(C, c.N())
@@ -150,7 +150,7 @@ func (c *Core) EncodeProof(gamma *point, C, S *big.Int) []byte {
 }
 
 // See: [draft-irtf-cfrg-VrfImpl-06 section 5.4.4](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.4.4)
-func (c *Core) DecodeProof(pi []byte) (gamma *point, C, S *big.Int, err error) {
+func (c *Core) DecodeProof(pi []byte) (gamma *Point, C, S *big.Int, err error) {
 	var (
 		ptlen = (c.Curve.Params().BitSize+7)/8 + 1
 		clen  = c.N()
@@ -162,7 +162,7 @@ func (c *Core) DecodeProof(pi []byte) (gamma *point, C, S *big.Int, err error) {
 	}
 
 	if gamma = c.Unmarshal(pi[:ptlen]); gamma == nil {
-		err = errors.New("invalid point")
+		err = errors.New("invalid Point")
 		return
 	}
 

@@ -49,7 +49,7 @@ var (
 			}
 
 			// Attempt to calculate the y coordinate for the given x coordinate such
-			// that the result pair is a point on the secp256k1 curve and the
+			// that the result pair is a Point on the secp256k1 curve and the
 			// solution with desired oddness is chosen.
 			wantOddY := format == secp256k1.PubKeyFormatCompressedOdd
 			if !secp256k1.DecompressY(&fx, wantOddY, &fy) {
@@ -89,7 +89,7 @@ func (v *VrfImpl) Prove(sk *ecdsa.PrivateKey, alpha []byte) (beta, pi []byte, er
 
 	// step 2: H = ECVRF_hash_to_curve(suite_string, Y, alpha_string)
 	// currently, try_and_increment algorithm is supported
-	H, err := core.HashToCurveTryAndIncrement(&point{sk.X, sk.Y}, alpha)
+	H, err := core.HashToCurveTryAndIncrement(&Point{sk.X, sk.Y}, alpha)
 	if err != nil {
 		return
 	}
@@ -141,14 +141,14 @@ func (v *VrfImpl) Verify(pk *ecdsa.PublicKey, alpha, pi []byte) (beta []byte, er
 	// step 3: (Gamma, c, s) = D
 
 	// step 4: H = ECVRF_hash_to_curve(suite_string, Y, alpha_string)
-	H, err := core.HashToCurveTryAndIncrement(&point{pk.X, pk.Y}, alpha)
+	H, err := core.HashToCurveTryAndIncrement(&Point{pk.X, pk.Y}, alpha)
 	if err != nil {
 		return
 	}
 
 	// step 5: U = s*B - c*Y
 	sB := core.ScalarBaseMult(s.Bytes())
-	cY := core.ScalarMult(&point{pk.X, pk.Y}, c.Bytes())
+	cY := core.ScalarMult(&Point{pk.X, pk.Y}, c.Bytes())
 	U := core.Sub(sB, cY)
 
 	// step 6: V = s*H - c*Gamma
