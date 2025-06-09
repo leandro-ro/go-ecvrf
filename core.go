@@ -16,22 +16,22 @@ type point struct {
 	X, Y *big.Int
 }
 
-type core struct {
+type Core struct {
 	*Config
 	cachedHasher hash.Hash
 }
 
 // Q returns prime order of large prime order subgroup.
-func (c *core) Q() *big.Int {
+func (c *Core) Q() *big.Int {
 	return c.Curve.Params().N
 }
 
 // N return half of length, in octets, of a field element in F, rounded up to the nearest even integer
-func (c *core) N() int {
+func (c *Core) N() int {
 	return ((c.Curve.Params().P.BitLen()+1)/2 + 7) / 8
 }
 
-func (c *core) getHasher() hash.Hash {
+func (c *Core) getHasher() hash.Hash {
 	if c.cachedHasher == nil {
 		c.cachedHasher = c.NewHasher()
 	} else {
@@ -42,36 +42,36 @@ func (c *core) getHasher() hash.Hash {
 
 // Marshal marshals a point into compressed form specified in section 4.3.6 of ANSI X9.62.
 // It's the alias of `point_to_string` specified in [draft-irtf-cfrg-vrf-06 section 5.5](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.5).
-func (c *core) Marshal(pt *point) []byte {
+func (c *Core) Marshal(pt *point) []byte {
 	return elliptic.MarshalCompressed(c.Curve, pt.X, pt.Y)
 }
 
 // Unmarshal unmarshals a compressed point in the form specified in section 4.3.6 of ANSI X9.62.
 // It's the alias of `string_to_point` specified in [draft-irtf-cfrg-vrf-06 section 5.5](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.5).
 // This is borrowed from the project https://github.com/google/keytransparency.
-func (c *core) Unmarshal(in []byte) *point {
+func (c *Core) Unmarshal(in []byte) *point {
 	if x, y := c.Decompress(c.Curve, in); x != nil && y != nil {
 		return &point{x, y}
 	}
 	return nil
 }
 
-func (c *core) ScalarMult(pt *point, k []byte) *point {
+func (c *Core) ScalarMult(pt *point, k []byte) *point {
 	x, y := c.Curve.ScalarMult(pt.X, pt.Y, k)
 	return &point{x, y}
 }
 
-func (c *core) ScalarBaseMult(k []byte) *point {
+func (c *Core) ScalarBaseMult(k []byte) *point {
 	x, y := c.Curve.ScalarBaseMult(k)
 	return &point{x, y}
 }
 
-func (c *core) Add(pt1, pt2 *point) *point {
+func (c *Core) Add(pt1, pt2 *point) *point {
 	x, y := c.Curve.Add(pt1.X, pt1.Y, pt2.X, pt2.Y)
 	return &point{x, y}
 }
 
-func (c *core) Sub(pt1, pt2 *point) *point {
+func (c *Core) Sub(pt1, pt2 *point) *point {
 	// pt1 - pt2 = pt1 + invert(pt2),
 	// where invert(pt2) = (x2, P - y2)
 	x, y := c.Curve.Add(
@@ -82,7 +82,7 @@ func (c *core) Sub(pt1, pt2 *point) *point {
 
 // HashToCurveTryAndIncrement takes in the VRF input `alpha` and converts it to H, using the try_and_increment algorithm.
 // See: [draft-irtf-cfrg-vrf-06 section 5.4.1.1](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.4.1.1).
-func (c *core) HashToCurveTryAndIncrement(pk *point, alpha []byte) (*point, error) {
+func (c *Core) HashToCurveTryAndIncrement(pk *point, alpha []byte) (*point, error) {
 	hasher := c.getHasher()
 	hash := make([]byte, 1+hasher.Size())
 	hash[0] = 2 // compress format
@@ -120,7 +120,7 @@ func (c *core) HashToCurveTryAndIncrement(pk *point, alpha []byte) (*point, erro
 }
 
 // See: [draft-irtf-cfrg-vrf-06 section 5.4.3](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.4.3)
-func (c *core) HashPoints(points ...*point) *big.Int {
+func (c *Core) HashPoints(points ...*point) *big.Int {
 	hasher := c.getHasher()
 	hasher.Write([]byte{c.SuiteString, 0x2})
 	for _, pt := range points {
@@ -129,7 +129,7 @@ func (c *core) HashPoints(points ...*point) *big.Int {
 	return bits2int(hasher.Sum(nil), c.N()*8)
 }
 
-func (c *core) GammaToHash(gamma *point) []byte {
+func (c *Core) GammaToHash(gamma *point) []byte {
 	gammaCof := gamma
 	if c.Cofactor != 1 {
 		gammaCof = c.ScalarMult(gamma, []byte{c.Cofactor})
@@ -140,7 +140,7 @@ func (c *core) GammaToHash(gamma *point) []byte {
 	return hasher.Sum(nil)
 }
 
-func (c *core) EncodeProof(gamma *point, C, S *big.Int) []byte {
+func (c *Core) EncodeProof(gamma *point, C, S *big.Int) []byte {
 	gammaBytes := c.Marshal(gamma)
 
 	cbytes := int2octets(C, c.N())
@@ -150,7 +150,7 @@ func (c *core) EncodeProof(gamma *point, C, S *big.Int) []byte {
 }
 
 // See: [draft-irtf-cfrg-vrf-06 section 5.4.4](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.4.4)
-func (c *core) DecodeProof(pi []byte) (gamma *point, C, S *big.Int, err error) {
+func (c *Core) DecodeProof(pi []byte) (gamma *point, C, S *big.Int, err error) {
 	var (
 		ptlen = (c.Curve.Params().BitSize+7)/8 + 1
 		clen  = c.N()
@@ -172,7 +172,7 @@ func (c *core) DecodeProof(pi []byte) (gamma *point, C, S *big.Int, err error) {
 }
 
 // rfc6979nonce generates nonce according to [RFC6979](https://tools.ietf.org/html/rfc6979).
-func (c *core) rfc6979nonce(sk *big.Int, m []byte) []byte {
+func (c *Core) rfc6979nonce(sk *big.Int, m []byte) []byte {
 	var (
 		q      = c.Q()
 		qlen   = q.BitLen()
