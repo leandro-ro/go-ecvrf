@@ -71,17 +71,17 @@ var (
 
 // New creates and initializes a VRF object using customized config.
 func New(cfg *Config) VRF {
-	return &vrf{cfg: *cfg}
+	return &vrf{Config: *cfg}
 }
 
 type vrf struct {
-	cfg Config
+	Config Config
 }
 
 // Prove constructs VRF proof following [draft-irtf-cfrg-vrf-06 section 5.1](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.1).
 func (v *vrf) Prove(sk *ecdsa.PrivateKey, alpha []byte) (beta, pi []byte, err error) {
 	var (
-		core = Core{Config: &v.cfg}
+		core = Core{Config: &v.Config}
 		q    = core.Q()
 	)
 
@@ -130,7 +130,7 @@ func (v *vrf) Prove(sk *ecdsa.PrivateKey, alpha []byte) (beta, pi []byte, err er
 
 // Verify checks the correctness of proof following [draft-irtf-cfrg-vrf-06 section 5.3](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.3).
 func (v *vrf) Verify(pk *ecdsa.PublicKey, alpha, pi []byte) (beta []byte, err error) {
-	core := Core{Config: &v.cfg}
+	core := Core{Config: &v.Config}
 	// step 1: D = ECVRF_decode_proof(pi_string)
 	gamma, c, s, err := core.DecodeProof(pi)
 
