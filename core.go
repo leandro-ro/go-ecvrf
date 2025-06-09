@@ -41,13 +41,13 @@ func (c *Core) getHasher() hash.Hash {
 }
 
 // Marshal marshals a point into compressed form specified in section 4.3.6 of ANSI X9.62.
-// It's the alias of `point_to_string` specified in [draft-irtf-cfrg-vrf-06 section 5.5](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.5).
+// It's the alias of `point_to_string` specified in [draft-irtf-cfrg-VrfImpl-06 section 5.5](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.5).
 func (c *Core) Marshal(pt *point) []byte {
 	return elliptic.MarshalCompressed(c.Curve, pt.X, pt.Y)
 }
 
 // Unmarshal unmarshals a compressed point in the form specified in section 4.3.6 of ANSI X9.62.
-// It's the alias of `string_to_point` specified in [draft-irtf-cfrg-vrf-06 section 5.5](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.5).
+// It's the alias of `string_to_point` specified in [draft-irtf-cfrg-VrfImpl-06 section 5.5](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.5).
 // This is borrowed from the project https://github.com/google/keytransparency.
 func (c *Core) Unmarshal(in []byte) *point {
 	if x, y := c.Decompress(c.Curve, in); x != nil && y != nil {
@@ -81,7 +81,7 @@ func (c *Core) Sub(pt1, pt2 *point) *point {
 }
 
 // HashToCurveTryAndIncrement takes in the VRF input `alpha` and converts it to H, using the try_and_increment algorithm.
-// See: [draft-irtf-cfrg-vrf-06 section 5.4.1.1](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.4.1.1).
+// See: [draft-irtf-cfrg-VrfImpl-06 section 5.4.1.1](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.4.1.1).
 func (c *Core) HashToCurveTryAndIncrement(pk *point, alpha []byte) (*point, error) {
 	hasher := c.getHasher()
 	hash := make([]byte, 1+hasher.Size())
@@ -119,7 +119,7 @@ func (c *Core) HashToCurveTryAndIncrement(pk *point, alpha []byte) (*point, erro
 	return nil, errors.New("no valid point found")
 }
 
-// See: [draft-irtf-cfrg-vrf-06 section 5.4.3](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.4.3)
+// See: [draft-irtf-cfrg-VrfImpl-06 section 5.4.3](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.4.3)
 func (c *Core) HashPoints(points ...*point) *big.Int {
 	hasher := c.getHasher()
 	hasher.Write([]byte{c.SuiteString, 0x2})
@@ -149,7 +149,7 @@ func (c *Core) EncodeProof(gamma *point, C, S *big.Int) []byte {
 	return append(append(gammaBytes, cbytes...), sbytes...)
 }
 
-// See: [draft-irtf-cfrg-vrf-06 section 5.4.4](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.4.4)
+// See: [draft-irtf-cfrg-VrfImpl-06 section 5.4.4](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.4.4)
 func (c *Core) DecodeProof(pi []byte) (gamma *point, C, S *big.Int, err error) {
 	var (
 		ptlen = (c.Curve.Params().BitSize+7)/8 + 1

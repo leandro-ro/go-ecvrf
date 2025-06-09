@@ -89,14 +89,14 @@ func Test_Secp256K1Sha256Tai_vrf_Prove(t *testing.T) {
 			v := vrf
 			gotBeta, gotPi, err := v.Prove(tt.sk, tt.alpha)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("vrf.Prove() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("VrfImpl.Prove() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(gotBeta, tt.wantBeta) {
-				t.Errorf("vrf.Prove() gotBeta = %v, want %v", hex.EncodeToString(gotBeta), hex.EncodeToString(tt.wantBeta))
+				t.Errorf("VrfImpl.Prove() gotBeta = %v, want %v", hex.EncodeToString(gotBeta), hex.EncodeToString(tt.wantBeta))
 			}
 			if !reflect.DeepEqual(gotPi, tt.wantPi) {
-				t.Errorf("vrf.Prove() gotPi = %v, want %v", hex.EncodeToString(gotPi), hex.EncodeToString(tt.wantPi))
+				t.Errorf("VrfImpl.Prove() gotPi = %v, want %v", hex.EncodeToString(gotPi), hex.EncodeToString(tt.wantPi))
 			}
 		})
 	}
@@ -145,11 +145,11 @@ func Test_Secp256K1Sha256Tai_vrf_Verify(t *testing.T) {
 			v := vrf
 			gotBeta, err := v.Verify(tt.pk, tt.alpha, tt.pi)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("vrf.Verify() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("VrfImpl.Verify() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(gotBeta, tt.wantBeta) {
-				t.Errorf("vrf.Verify() = %v, want %v", gotBeta, tt.wantBeta)
+				t.Errorf("VrfImpl.Verify() = %v, want %v", gotBeta, tt.wantBeta)
 			}
 		})
 	}
@@ -197,7 +197,7 @@ func Test_Secp256K1Sha256Tai_vrf_Verify_bad_message(t *testing.T) {
 		v := vrf
 		_, err := v.Verify(tt.pk, tt.alpha, tt.pi)
 		if (err != nil) != tt.wantErr {
-			t.Errorf("vrf.Verify() error = %v, wantErr %v", err, tt.wantErr)
+			t.Errorf("VrfImpl.Verify() error = %v, wantErr %v", err, tt.wantErr)
 			return
 		}
 	})
@@ -251,14 +251,14 @@ func Test_P256Sha256Tai_vrf_Prove(t *testing.T) {
 			v := vrf
 			gotBeta, gotPi, err := v.Prove(tt.sk, tt.alpha)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("vrf.Prove() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("VrfImpl.Prove() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(gotBeta, tt.wantBeta) {
-				t.Errorf("vrf.Prove() gotBeta = %v, want %v", gotBeta, tt.wantBeta)
+				t.Errorf("VrfImpl.Prove() gotBeta = %v, want %v", gotBeta, tt.wantBeta)
 			}
 			if !reflect.DeepEqual(gotPi, tt.wantPi) {
-				t.Errorf("vrf.Prove() gotPi = %v, want %v", gotPi, tt.wantPi)
+				t.Errorf("VrfImpl.Prove() gotPi = %v, want %v", gotPi, tt.wantPi)
 			}
 		})
 	}
@@ -310,11 +310,11 @@ func Test_P256Sha256Tai_vrf_Verify(t *testing.T) {
 			v := vrf
 			gotBeta, err := v.Verify(tt.pk, tt.alpha, tt.pi)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("vrf.Verify() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("VrfImpl.Verify() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(gotBeta, tt.wantBeta) {
-				t.Errorf("vrf.Verify() = %v, want %v", gotBeta, tt.wantBeta)
+				t.Errorf("VrfImpl.Verify() = %v, want %v", gotBeta, tt.wantBeta)
 			}
 		})
 	}
