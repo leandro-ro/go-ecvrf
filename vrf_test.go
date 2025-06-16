@@ -418,6 +418,19 @@ func BenchmarkVRF(b *testing.B) {
 			}
 		}
 	})
+	b.Run("secp256k1sha256tai-eval", func(b *testing.B) {
+		sk, _ := secp256k1.GeneratePrivateKey()
+		esk := sk.ToECDSA()
+		alpha := []byte("Hello VeChain")
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			_, err := Secp256k1Sha256Tai.Eval(esk, alpha)
+			if err != nil {
+				b.Fatal(err)
+			}
+		}
+	})
 	b.Run("p256sha256tai-proving", func(b *testing.B) {
 		sk, _ := ecdsa.GenerateKey(elliptic.P256(), rand.New(rand.NewSource(1)))
 		alpha := []byte("Hello VeChain")

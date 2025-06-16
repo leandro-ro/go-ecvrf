@@ -23,6 +23,8 @@ type VRF interface {
 	// Verify checks the proof `pi` of the message `alpha` against the given
 	// public key `pk`. The hash output is returned as `beta`.
 	Verify(pk *ecdsa.PublicKey, alpha, pi []byte) (beta []byte, err error)
+
+	Eval(sk *ecdsa.PrivateKey, alpha []byte) (beta []byte, err error)
 }
 
 var (
@@ -126,6 +128,23 @@ func (v *VrfImpl) Prove(sk *ecdsa.PrivateKey, alpha []byte) (beta, pi []byte, er
 	// here also returns beta
 	beta = core.GammaToHash(gamma)
 	return
+}
+
+func (v *VrfImpl) Eval(sk *ecdsa.PrivateKey, alpha []byte) (beta []byte, err error) {
+	core := Core{Config: &v.Config}
+
+	// Step 2: H = ECVRF_hash_to_curve(suite_string, Y, alpha_string)
+	H, err := core.HashToCurveTryAndIncrement(&Point{sk.X, sk.Y}, alpha)
+	if err != nil {
+		return nil, err
+	}
+
+	// Step 4: Gamma = x * H
+	gamma := core.ScalarMult(H, sk.D.Bytes())
+
+	// Step 9: beta = ECVRF_hash_output(Gamma)
+	beta = core.GammaToHash(gamma)
+	return beta, nil
 }
 
 // Verify checks the correctness of proof following [draft-irtf-cfrg-VrfImpl-06 section 5.3](https://tools.ietf.org/id/draft-irtf-cfrg-vrf-06.html#rfc.section.5.3).
