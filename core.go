@@ -10,6 +10,7 @@ import (
 	"math/big"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	ethsecp "github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
 type Point struct {
@@ -57,15 +58,25 @@ func (c *Core) Unmarshal(in []byte) *Point {
 }
 
 func (c *Core) ScalarMult(pt *Point, k []byte) *Point {
+	// Use ethsecp only for secp256k1
+	if c.Curve.Params().Name == "secp256k1" {
+		x, y := ethsecp.S256().ScalarMult(pt.X, pt.Y, k)
+		return &Point{X: x, Y: y}
+	}
+
+	// Fallback: Build-In Curve-Multiplikation
 	x, y := c.Curve.ScalarMult(pt.X, pt.Y, k)
-	return &Point{x, y}
+	return &Point{X: x, Y: y}
 }
 
 func (c *Core) ScalarBaseMult(k []byte) *Point {
+	if c.Curve.Params().Name == "secp256k1" {
+		x, y := ethsecp.S256().ScalarBaseMult(k)
+		return &Point{X: x, Y: y}
+	}
 	x, y := c.Curve.ScalarBaseMult(k)
-	return &Point{x, y}
+	return &Point{X: x, Y: y}
 }
-
 func (c *Core) Add(pt1, pt2 *Point) *Point {
 	x, y := c.Curve.Add(pt1.X, pt1.Y, pt2.X, pt2.Y)
 	return &Point{x, y}
